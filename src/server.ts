@@ -1,6 +1,6 @@
 import express from 'express';
 import * as Sentry from '@sentry/node';
-import { handleCheckout } from './paymentController';
+import { handleCheckout, handleRefund } from './paymentController';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -43,7 +43,26 @@ app.post('/checkout', async (req, res) => {
   }
 });
 
+// Refund endpoint: Triggers TypeError when body.reason is omitted or null
+app.post('/refund', async (req, res) => {
+  try {
+    await handleRefund(req as any, res);
+  } catch (err: any) {
+    console.error('💥 [Server Error] Caught exception in /refund:', err.message);
+    if (sentryDsn) {
+      Sentry.captureException(err);
+      await Sentry.flush(2000);
+      console.log('📡 Exception transmitted to Sentry successfully.');
+    }
+    res.status(500).json({
+      error: err.message,
+      stack: err.stack,
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Checkout API Service running on http://localhost:${PORT}`);
-  console.log(`➡️  POST http://localhost:${PORT}/checkout to test`);
+  console.log(`➡️  POST http://localhost:${PORT}/checkout to test checkout`);
+  console.log(`➡️  POST http://localhost:${PORT}/refund to test refund`);
 });
