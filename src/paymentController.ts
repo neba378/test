@@ -42,7 +42,7 @@ export async function handleRefund(req: { body: RefundRequest }, res: any) {
     const { paymentId, amount, reason } = req.body;
 
     // Buggy: reason is assumed to always be an object, throws TypeError when client sends null or undefined
-    const reasonCode = (reason as any)?.code ? (reason as any).code.toUpperCase() : "UNKNOWN";
+    const reasonCode = (reason as any)?.code ? (reason as any)?.code ? (reason as any).code.toUpperCase() : "UNKNOWN" : "UNKNOWN";
 
     return res.status(200).json({
       success: true,
